@@ -1,8 +1,8 @@
 FROM hashicorp/terraform:light
 RUN apk update && \
     apk upgrade && \
-    apk add py-pip gcc python3-dev libffi-dev musl-dev openssl-dev gnupg make curl bash unzip && \
-    pip3 install azure-cli
+    apk add py-pip gcc python3-dev libffi-dev musl-dev openssl-dev gnupg make curl bash unzip groff && \
+    pip3 install azure-cli boto3
 
 # AWS CLI 2
 ENV GLIBC_VER=2.31-r0
@@ -42,11 +42,16 @@ ARG KUBECTL_TRACK=stable.txt
 
 ARG KUBECTL_ARCH=linux/amd64
 
+ARG TERRAGRUNT=v0.24.0
+
+ADD https://github.com/gruntwork-io/terragrunt/releases/download/${TERRAGRUNT}/terragrunt_linux_amd64 /usr/local/bin/terragrunt
 RUN apk add --no-cache --update ca-certificates vim curl jq nano && \
   KOPS_URL=$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | jq -r ".assets[] | select(.name == \"kops-linux-amd64\") | .browser_download_url") && \
   curl -SsL --retry 5 "${KOPS_URL}" > /usr/local/bin/kops && \
   chmod +x /usr/local/bin/kops && \
   KUBECTL_VERSION=$(curl -SsL --retry 5 "https://storage.googleapis.com/${KUBECTL_SOURCE}/${KUBECTL_TRACK}") && \
   curl -SsL --retry 5 "https://storage.googleapis.com/${KUBECTL_SOURCE}/${KUBECTL_VERSION}/bin/${KUBECTL_ARCH}/kubectl" > /usr/local/bin/kubectl && \
-  chmod +x /usr/local/bin/kubectl &&\
-  apk del curl jq
+  chmod +x /usr/local/bin/kubectl && \
+  apk del curl jq && \
+  chmod 755 /usr/local/bin/terragrunt
+
